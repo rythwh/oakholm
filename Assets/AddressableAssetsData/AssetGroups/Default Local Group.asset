@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Default Local Group
+  m_EditorClassIdentifier: 
+  m_GroupName: Default Local Group
+  m_Data:
+    m_SerializedData: []
+  m_GUID: bcba237c45e617748b3e5f833a65ea77
+  m_SerializeEntries:
+  - m_GUID: c396bbe5700e6c1429129cb519c9befb
+    m_Address: UI/UIMainMenu
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 031e15f1d9c220d45a501cd83fd580d3
+    m_Address: UI/UICreatePlanet
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa178de80d635fd4e9dea35cd5dae7a7
+    m_Address: UI/UILoadingScreen
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 79e322f068e05984e95f096635b2eca9
+    m_Address: UI/UICreateColony
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 89633459d81d9b64cb020aef82717846
+    m_Address: UI/UISimulation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be54730c47f17804595e6f2c3b63fc26
+    m_Address: Simulation/Tile
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e28bdb0e32c025d4bab530ddb614f5d6
+    m_Address: UI/UIDebugSimulation
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a448af3a626c12947ab22c08b26290ae
+    m_Address: UI/Component/UIDebugSliderElement
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 1b5bcef5cf0e6b042be5d9327f47fed9, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: e4ad7e3f74d80bd4e8ee67d54064054b, type: 2}
+    - {fileID: 11400000, guid: 475716a522c60fe42a77c5ca4ba6a239, type: 2}
