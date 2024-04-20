@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Unity.Burst;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -17,6 +18,7 @@ namespace Oakholm {
 			Create(tilePool, tileGrid);
 		}
 
+		[BurstCompile]
 		private void Create(IObjectPool<TileView> tilePool, Grid tileGrid) {
 			Vector2Int min = Position * Size;
 			Vector2Int max = Position * Size + (Vector2Int.one * Size);

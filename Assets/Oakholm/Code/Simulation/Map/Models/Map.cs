@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using Cysharp.Threading.Tasks;
 using Priority_Queue;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -8,11 +10,13 @@ namespace Oakholm {
 
 		private readonly IObjectPool<TileView> tilePool;
 		private readonly Grid tileGrid;
-		private readonly List<Chunk> chunks = new List<Chunk>();
+		private readonly HashSet<Chunk> chunks = new HashSet<Chunk>();
 		private readonly HashSet<Vector2Int> chunkPositions = new HashSet<Vector2Int>();
 
 		private readonly SimplePriorityQueue<Vector2Int, int> createChunkQueue = new SimplePriorityQueue<Vector2Int, int>();
-		private readonly Queue<Chunk> unloadChunkQueue = new Queue<Chunk>();
+		private readonly SimplePriorityQueue<Chunk, int> unloadChunkQueue = new SimplePriorityQueue<Chunk, int>();
+
+		private const int MaxChunkDistance = 16 * Chunk.Size;
 
 		public Map(IObjectPool<TileView> tilePool, Grid tileGrid) {
 			this.tilePool = tilePool;
@@ -23,13 +27,21 @@ namespace Oakholm {
 			for (int y = validAreaRect.yMin; y < validAreaRect.yMax; y++) {
 				for (int x = validAreaRect.xMin; x < validAreaRect.xMax; x++) {
 					Vector2Int chunkPosition = new Vector2Int(x, y);
+					int distance = (int)Vector2.Distance(chunkPosition, validAreaRect.center);
+					if (distance * Chunk.Size > MaxChunkDistance) {
+						continue;
+					}
 					if (chunkPositions.Contains(chunkPosition)) {
 						continue;
 					}
 					if (createChunkQueue.Contains(chunkPosition)) {
 						continue;
 					}
-					createChunkQueue.Enqueue(chunkPosition, (int)Vector2.Distance(chunkPosition, validAreaRect.center));
+					Chunk chunkQueuedToUnload = unloadChunkQueue.FirstOrDefault(chunk => chunk.Position == chunkPosition);
+					if (chunkQueuedToUnload != null) {
+						unloadChunkQueue.Remove(chunkQueuedToUnload);
+					}
+					createChunkQueue.EnqueueWithoutDuplicates(chunkPosition, distance);
 				}
 			}
 		}
@@ -52,17 +64,19 @@ namespace Oakholm {
 				if (validAreaRect.Overlaps(chunk.Rect)) {
 					continue;
 				}
-				if (unloadChunkQueue.Contains(chunk)) {
-					continue;
+				if (createChunkQueue.Contains(chunk.Position)) {
+					createChunkQueue.Remove(chunk.Position);
 				}
-				unloadChunkQueue.Enqueue(chunk);
+				unloadChunkQueue.EnqueueWithoutDuplicates(chunk, (int)Vector2.Distance(chunk.Position, validAreaRect.center));
 			}
 		}
 
 		public void ProcessQueuedChunksToUnload() {
-			if (!unloadChunkQueue.TryDequeue(out Chunk chunkToUnload)) {
+			Chunk chunkToUnload = unloadChunkQueue.ElementAtOrDefault(0);
+			if (chunkToUnload == null) {
 				return;
 			}
+			unloadChunkQueue.Remove(chunkToUnload);
 			UnloadChunk(chunkToUnload);
 		}
 
@@ -70,6 +84,12 @@ namespace Oakholm {
 			chunk.Release(tilePool);
 			chunks.Remove(chunk);
 			chunkPositions.Remove(chunk.Position);
+		}
+
+		public void RebuildAllChunks() {
+			createChunkQueue.Clear();
+			unloadChunkQueue.Clear();
+			UnloadHiddenChunks(RectInt.zero);
 		}
 	}
 }

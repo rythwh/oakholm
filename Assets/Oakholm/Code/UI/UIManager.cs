@@ -74,6 +74,9 @@ namespace Oakholm.UI {
 
 			foreach (IUIGroup group in parentGroups) {
 				IUIGroup foundGroup = group.FindGroup(presenter);
+				if (foundGroup == null) {
+					continue;
+				}
 				if (foundGroup.GetPresenter().Equals(presenter)) {
 					return foundGroup;
 				}

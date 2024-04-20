@@ -18,8 +18,11 @@ namespace Oakholm {
 		private readonly Grid tileGrid;
 		private TileView tilePrefab;
 		private readonly ObjectPool<TileView> tilePool;
+		private readonly HashSetPool<Chunk> chunkPool;
 
-		private Map map;
+		private const int TilePoolCapacity = Chunk.Size << 12;
+
+		public Map Map { get; private set; }
 
 		private readonly int seed;
 
@@ -33,8 +36,11 @@ namespace Oakholm {
 			tilePool = new ObjectPool<TileView>(
 				CreateTileView,
 				actionOnRelease: ReleaseTileView,
-				defaultCapacity: Chunk.Size << 9,
-				maxSize: Chunk.Size << 12
+				defaultCapacity: TilePoolCapacity,
+				maxSize: TilePoolCapacity
+			);
+			chunkPool = new HashSetPool<Chunk>(
+
 			);
 
 			stateManager.OnStateChanged += OnStateChanged;
@@ -62,7 +68,8 @@ namespace Oakholm {
 		private async UniTask CreateMap() {
 			MapGenerator.Initialize(seed);
 			tilePrefab = (await GetTilePrefab()).GetComponent<TileView>();
-			map = new Map(tilePool, tileGrid);
+			//await PrefillPool();
+			Map = new Map(tilePool, tileGrid);
 		}
 
 		private void OnCameraPositionChanged(Vector2 _) {
@@ -76,13 +83,13 @@ namespace Oakholm {
 		private void OnCameraChanged() {
 			RectInt cameraWorldRect = cameraManager.GetCameraWorldRect();
 			RectInt validAreaRect = GetValidAreaRectChunkScale(cameraWorldRect);
-			map?.UnloadHiddenChunks(validAreaRect);
-			map?.CreateChunks(validAreaRect);
+			Map?.UnloadHiddenChunks(validAreaRect);
+			Map?.CreateChunks(validAreaRect);
 		}
 
 		public override void OnUpdate() {
-			map?.ProcessQueuedChunksToUnload();
-			map?.ProcessQueuedChunksToCreate();
+			Map?.ProcessQueuedChunksToUnload();
+			Map?.ProcessQueuedChunksToCreate();
 		}
 
 		private async UniTask<GameObject> GetTilePrefab() {

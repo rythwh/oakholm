@@ -1,4 +1,6 @@
 ﻿using System;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -18,8 +20,12 @@ namespace Oakholm {
 		private Vector2 moveVector = Vector2.zero;
 		public event Action<Vector2> OnCameraPositionChanged;
 
-		private const int CameraZoomSpeedMultiplier = 100;
-		private double zoomAxis = 0;
+		private const int CameraZoomSpeedMultiplier = 10;
+		private const int ZoomMin = 5;
+		private const int ZoomMax = 100;
+		private const float ZoomTweenDuration = 0.5f;
+		private float zoomAxis = 0;
+		private UniTask zoomTaskHandle;
 		public event Action<float> OnCameraZoomChanged;
 
 		public CameraManager(SceneReferenceProvider sceneReferenceProvider, StateManager stateManager) {
@@ -47,7 +53,6 @@ namespace Oakholm {
 
 		public override void OnUpdate() {
 			MoveCamera();
-			ZoomCamera();
 		}
 
 		public override void OnClose() {
@@ -77,8 +82,8 @@ namespace Oakholm {
 		}
 
 		private void OnZoomCameraPerformed(InputAction.CallbackContext callbackContext) {
-			zoomAxis = callbackContext.ReadValue<double>();
-			Debug.Log(zoomAxis);
+			zoomAxis = callbackContext.ReadValue<float>();
+			ZoomCamera();
 		}
 
 		private void OnZoomCameraCancelled(InputAction.CallbackContext callbackContext) {
@@ -89,10 +94,26 @@ namespace Oakholm {
 			if (stateManager.State != EState.Simulation) {
 				return;
 			}
-			float orthographicSize = camera.orthographicSize;
-			orthographicSize += (float)zoomAxis * CameraZoomSpeedMultiplier * Time.deltaTime;
-			camera.orthographicSize = orthographicSize;
-			OnCameraZoomChanged?.Invoke(orthographicSize);
+			if (Mathf.Approximately(zoomAxis, 0)) {
+				return;
+			}
+			float currentZoom = camera.orthographicSize;
+			float newZoom = currentZoom + (zoomAxis * CameraZoomSpeedMultiplier);
+			newZoom = Mathf.Clamp(newZoom, ZoomMin, ZoomMax);
+			if (!zoomTaskHandle.GetAwaiter().IsCompleted) {
+				zoomTaskHandle.Forget();
+			}
+			zoomTaskHandle = DOTween
+				.To(
+					() => camera.orthographicSize,
+					value => camera.orthographicSize = value,
+					newZoom,
+					ZoomTweenDuration)
+				.SetEase(Ease.OutCubic)
+				.Play()
+				.OnComplete(() => OnCameraZoomChanged?.Invoke(newZoom))
+				.AsyncWaitForCompletion()
+				.AsUniTask();
 		}
 
 		public RectInt GetCameraWorldRect() {
