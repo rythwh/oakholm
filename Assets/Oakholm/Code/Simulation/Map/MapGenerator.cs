@@ -27,17 +27,17 @@ namespace Oakholm {
 
 		private static void SetNoises() {
 			noises = new List<Noise> {
-				new Noise(ENoise.Continentalness, 0.002f, 10),
-				new Noise(ENoise.Hilliness, 0.01f, 5),
-				new Noise(ENoise.Bumpiness, 0.05f, 2)
+				new Noise(ENoise.Continentalness, 0.002f, 20),
+				new Noise(ENoise.Hilliness, 0.01f, 10),
+				new Noise(ENoise.Bumpiness, 0.05f, 5)
 			};
 		}
 
 		private static void SetHeights() {
 			heights = new List<Height> {
-				new Height(EHeight.Water, (0, 0.33f), Color.blue),
-				new Height(EHeight.Ground, (0.33f, 0.66f), Color.green),
-				new Height(EHeight.Mountain, (0.66f, 1), Color.white)
+				new Height(EHeight.Water, (0, 0.35f), Color.blue),
+				new Height(EHeight.Ground, (0.35f, 0.6f), Color.green),
+				new Height(EHeight.Mountain, (0.6f, 1), Color.white)
 			};
 		}
 
@@ -58,8 +58,7 @@ namespace Oakholm {
 			return null;
 		}
 
-		[BurstCompile]
-		public static void SetTileHeight(Tile tile) {
+		public static (float value, Height obj) GetTileHeight(Tile tile) {
 			Vector2 position = (Vector3)tile.Position;
 			float noiseValue = 0;
 			float weightSum = 0;
@@ -70,7 +69,7 @@ namespace Oakholm {
 			noiseValue /= weightSum;
 			noiseValue = Mathf.Clamp01(noiseValue);
 
-			tile.SetHeight(noiseValue, GetHeightFromValue(noiseValue));
+			return (noiseValue, GetHeightFromValue(noiseValue));
 		}
 	}
 }

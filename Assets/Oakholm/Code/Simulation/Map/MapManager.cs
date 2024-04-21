@@ -2,7 +2,6 @@
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.Pool;
 
 namespace Oakholm {
 
@@ -17,37 +16,27 @@ namespace Oakholm {
 
 		private readonly Grid tileGrid;
 		private TileView tilePrefab;
-		private readonly ObjectPool<TileView> tilePool;
-		private readonly HashSetPool<Chunk> chunkPool;
-
-		private const int TilePoolCapacity = Chunk.Size << 12;
 
 		public Map Map { get; private set; }
 
 		private readonly int seed;
 
-		public MapManager(SceneReferenceProvider sceneReferenceProvider, StateManager stateManager, CameraManager cameraManager, LoadingManager loadingManager) {
-
+		public MapManager(
+			SceneReferenceProvider sceneReferenceProvider,
+			StateManager stateManager,
+			CameraManager cameraManager,
+			LoadingManager loadingManager
+		) {
 			this.stateManager = stateManager;
 			this.cameraManager = cameraManager;
 			this.loadingManager = loadingManager;
 
 			tileGrid = sceneReferenceProvider.TileGrid;
-			tilePool = new ObjectPool<TileView>(
-				CreateTileView,
-				actionOnRelease: ReleaseTileView,
-				defaultCapacity: TilePoolCapacity,
-				maxSize: TilePoolCapacity
-			);
-			chunkPool = new HashSetPool<Chunk>(
-
-			);
 
 			stateManager.OnStateChanged += OnStateChanged;
 
 			cameraManager.OnCameraPositionChanged += OnCameraPositionChanged;
 			cameraManager.OnCameraZoomChanged += OnCameraZoomChanged;
-
 
 			seed = Random.Range(int.MinValue, int.MaxValue);
 		}
@@ -68,8 +57,7 @@ namespace Oakholm {
 		private async UniTask CreateMap() {
 			MapGenerator.Initialize(seed);
 			tilePrefab = (await GetTilePrefab()).GetComponent<TileView>();
-			//await PrefillPool();
-			Map = new Map(tilePool, tileGrid);
+			Map = new Map(tilePrefab, tileGrid);
 		}
 
 		private void OnCameraPositionChanged(Vector2 _) {
@@ -94,15 +82,6 @@ namespace Oakholm {
 
 		private async UniTask<GameObject> GetTilePrefab() {
 			return await Addressables.LoadAssetAsync<GameObject>("Simulation/Tile");
-		}
-
-		private TileView CreateTileView() {
-			return Object.Instantiate(tilePrefab, Vector2.zero, Quaternion.identity, tileGrid.transform);
-		}
-
-		private void ReleaseTileView(TileView tileView) {
-			tileView.name = "Pooled";
-			tileView.gameObject.SetActive(false);
 		}
 
 		private RectInt GetValidAreaRectChunkScale(RectInt rect) {

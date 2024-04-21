@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
 using Priority_Queue;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -8,8 +7,7 @@ using UnityEngine.Pool;
 namespace Oakholm {
 	public class Map {
 
-		private readonly IObjectPool<TileView> tilePool;
-		private readonly Grid tileGrid;
+		private ObjectPool<Chunk> chunkPool;
 		private readonly HashSet<Chunk> chunks = new HashSet<Chunk>();
 		private readonly HashSet<Vector2Int> chunkPositions = new HashSet<Vector2Int>();
 
@@ -18,10 +16,21 @@ namespace Oakholm {
 
 		private const int MaxChunkDistance = 16 * Chunk.Size;
 
-		public Map(IObjectPool<TileView> tilePool, Grid tileGrid) {
-			this.tilePool = tilePool;
-			this.tileGrid = tileGrid;
+		public Map(TileView tilePrefab, Grid tileGrid) {
+			CreateChunkPool(tilePrefab, tileGrid);
 		}
+
+		private void CreateChunkPool(TileView tilePrefab, Grid tileGrid) {
+			chunkPool = new ObjectPool<Chunk>(
+				createFunc: () => CreatePoolChunk(tilePrefab, tileGrid)
+			);
+		}
+
+		private Chunk CreatePoolChunk(TileView tilePrefab, Grid tileGrid) {
+			return new Chunk(Vector2Int.zero, tilePrefab, tileGrid);
+		}
+
+		// Create Chunks
 
 		public void CreateChunks(RectInt validAreaRect) {
 			for (int y = validAreaRect.yMin; y < validAreaRect.yMax; y++) {
@@ -54,10 +63,16 @@ namespace Oakholm {
 		}
 
 		private void CreateChunk(Vector2Int chunkPosition) {
-			Chunk chunk = new Chunk(chunkPosition, tilePool, tileGrid);
+
+			Chunk chunk = chunkPool.Get();
+			chunk.Reset(chunkPosition);
+
 			chunks.Add(chunk);
 			chunkPositions.Add(chunkPosition);
 		}
+
+		// /Create Chunks
+		// Unload Chunks
 
 		public void UnloadHiddenChunks(RectInt validAreaRect) {
 			foreach (Chunk chunk in chunks) {
@@ -81,10 +96,15 @@ namespace Oakholm {
 		}
 
 		private void UnloadChunk(Chunk chunk) {
-			chunk.Release(tilePool);
+
+			chunk.Release();
+			chunkPool.Release(chunk);
+
 			chunks.Remove(chunk);
 			chunkPositions.Remove(chunk.Position);
 		}
+
+		// /Unload Chunks
 
 		public void RebuildAllChunks() {
 			createChunkQueue.Clear();
