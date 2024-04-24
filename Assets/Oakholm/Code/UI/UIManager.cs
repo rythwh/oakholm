@@ -36,6 +36,8 @@ namespace Oakholm.UI {
 			foreach (IUIGroup group in parentGroups) {
 				group.Close();
 			}
+			parentGroups.Clear();
+
 			switch (states.newState) {
 				case EState.Boot:
 					break;

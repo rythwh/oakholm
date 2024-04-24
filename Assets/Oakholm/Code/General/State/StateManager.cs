@@ -16,6 +16,7 @@ namespace Oakholm {
 
 		public EState State { get; private set; }
 		public event Action<(EState oldState, EState newState)> OnStateChanged;
+		public event Action<EState> OnPostStateChanged;
 
 		private readonly Dictionary<EState, List<EState>> validStateTransitions = new Dictionary<EState, List<EState>>() {
 			{ EState.Boot, new() { EState.MainMenu } },
@@ -44,6 +45,7 @@ namespace Oakholm {
 			EState oldState = State;
 			State = newState;
 			OnStateChanged?.Invoke((oldState, newState));
+			OnPostStateChanged?.Invoke(State);
 		}
 	}
 }
