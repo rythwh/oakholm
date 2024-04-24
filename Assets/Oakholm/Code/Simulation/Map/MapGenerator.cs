@@ -1,9 +1,13 @@
 ﻿using System.Collections.Generic;
 using Unity.Burst;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace Oakholm {
+
+	[BurstCompile]
 	public static class MapGenerator {
 
 		public static bool Initialized = false;
@@ -27,17 +31,17 @@ namespace Oakholm {
 
 		private static void SetNoises() {
 			noises = new List<Noise> {
-				new Noise(ENoise.Continentalness, 0.002f, 20),
-				new Noise(ENoise.Hilliness, 0.01f, 10),
-				new Noise(ENoise.Bumpiness, 0.05f, 5)
+				new Noise("Continentalness", 0.002f, 20),
+				new Noise("Hilliness", 0.01f, 10),
+				new Noise("Bumpiness", 0.05f, 5)
 			};
 		}
 
 		private static void SetHeights() {
 			heights = new List<Height> {
-				new Height(EHeight.Water, (0, 0.35f), Color.blue),
-				new Height(EHeight.Ground, (0.35f, 0.6f), Color.green),
-				new Height(EHeight.Mountain, (0.6f, 1), Color.white)
+				new Height(new NativeText("Water", Allocator.Persistent), (0, 0.35f), Color.blue),
+				new Height(new NativeText("Ground", Allocator.Persistent), (0.35f, 0.7f), Color.green),
+				new Height(new NativeText("Mountain", Allocator.Persistent), (0.7f, 1), Color.white)
 			};
 		}
 
@@ -55,19 +59,19 @@ namespace Oakholm {
 					return height;
 				}
 			}
-			return null;
+			return default;
 		}
 
 		public static (float value, Height obj) GetTileHeight(Tile tile) {
-			Vector2 position = (Vector3)tile.Position;
+			int2 position = tile.Position;
 			float noiseValue = 0;
 			float weightSum = 0;
 			foreach (Noise noise in noises) {
 				noiseValue += noise.GetPerlinNoise(position);
 				weightSum += noise.Weight;
 			}
-			noiseValue /= weightSum;
-			noiseValue = Mathf.Clamp01(noiseValue);
+			noiseValue = ((noiseValue / weightSum) + 1) / 2f;
+			noiseValue = math.clamp(noiseValue, 0, 1);
 
 			return (noiseValue, GetHeightFromValue(noiseValue));
 		}

@@ -15,9 +15,13 @@ namespace Oakholm {
 		private readonly LoadingManager loadingManager;
 
 		private readonly Grid tileGrid;
+
+		private MapView mapPrefab;
+		private ChunkView chunkPrefab;
 		private TileView tilePrefab;
 
 		public Map Map { get; private set; }
+		public MapView MapView { get; private set; }
 
 		private readonly int seed;
 
@@ -42,6 +46,7 @@ namespace Oakholm {
 		}
 
 		public override void OnClose() {
+
 			stateManager.OnStateChanged -= OnStateChanged;
 
 			cameraManager.OnCameraPositionChanged -= OnCameraPositionChanged;
@@ -50,14 +55,21 @@ namespace Oakholm {
 
 		private void OnStateChanged((EState oldState, EState newState) states) {
 			if (states.newState == EState.Loading) {
-				loadingManager.AddLoadingTaskHandle(UniTask.Create(CreateMap));
+				loadingManager.AddLoadingTaskHandle(CreateMap());
+				loadingManager.AddLoadingTaskHandle(CreateMapRepresentation());
 			}
 		}
 
 		private async UniTask CreateMap() {
 			MapGenerator.Initialize(seed);
-			tilePrefab = (await GetTilePrefab()).GetComponent<TileView>();
-			Map = new Map(tilePrefab, tileGrid);
+			Map = new Map();
+			await UniTask.CompletedTask;
+		}
+
+		private async UniTask CreateMapRepresentation() {
+			await GetRepresentationPrefabs();
+			MapView = Object.Instantiate(mapPrefab, tileGrid.transform);
+			MapView.Initialize(tileGrid, chunkPrefab, tilePrefab);
 		}
 
 		private void OnCameraPositionChanged(Vector2 _) {
@@ -69,19 +81,26 @@ namespace Oakholm {
 		}
 
 		private void OnCameraChanged() {
+
 			RectInt cameraWorldRect = cameraManager.GetCameraWorldRect();
 			RectInt validAreaRect = GetValidAreaRectChunkScale(cameraWorldRect);
-			Map?.UnloadHiddenChunks(validAreaRect);
-			Map?.CreateChunks(validAreaRect);
+
+			Map?.SetValidAreaRect(validAreaRect);
+			Map?.UnloadHiddenChunks();
+			Map?.CreateChunks();
 		}
 
 		public override void OnUpdate() {
 			Map?.ProcessQueuedChunksToUnload();
 			Map?.ProcessQueuedChunksToCreate();
+
+			MapBinder.ApplyChunks(Map?.GetChunks(), MapView);
 		}
 
-		private async UniTask<GameObject> GetTilePrefab() {
-			return await Addressables.LoadAssetAsync<GameObject>("Simulation/Tile");
+		private async UniTask GetRepresentationPrefabs() {
+			mapPrefab = (await Addressables.LoadAssetAsync<GameObject>("Simulation/Map")).GetComponent<MapView>();
+			chunkPrefab = (await Addressables.LoadAssetAsync<GameObject>("Simulation/Chunk")).GetComponent<ChunkView>();
+			tilePrefab = (await Addressables.LoadAssetAsync<GameObject>("Simulation/Tile")).GetComponent<TileView>();
 		}
 
 		private RectInt GetValidAreaRectChunkScale(RectInt rect) {

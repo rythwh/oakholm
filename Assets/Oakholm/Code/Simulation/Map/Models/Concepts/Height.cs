@@ -1,21 +1,18 @@
-﻿using UnityEngine;
+﻿using Unity.Burst;
+using Unity.Collections;
+using UnityEngine;
 
 namespace Oakholm {
 
-	public enum EHeight {
-		Water,
-		Ground,
-		Mountain
-	}
+	[BurstCompile]
+	public struct Height {
 
-	public class Height {
-
-		public EHeight Type { get; }
+		public NativeText Type { get; }
 		public (float min, float max) Range { get; set; }
 		public Color DebugColour { get; }
 
 		public Height(
-			EHeight type,
+			NativeText type,
 			(float min, float max) range,
 			Color debugColour
 		) {

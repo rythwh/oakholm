@@ -5,21 +5,15 @@ using Random = UnityEngine.Random;
 
 namespace Oakholm {
 
-	public enum ENoise {
-		Continentalness,
-		Hilliness,
-		Bumpiness,
-		Temperature
-	}
-
+	[BurstCompile]
 	public class Noise {
 
-		public ENoise Type { get; }
+		private string Type { get; }
 		public float Multiplier { get; set; }
 		public float Weight { get; set; }
-		public int Offset { get; private set; }
+		private int Offset { get; set; }
 
-		public Noise(ENoise type, float multiplier, float weight) {
+		public Noise(string type, float multiplier, float weight) {
 			Type = type;
 			Multiplier = multiplier;
 			Weight = weight;
@@ -27,14 +21,12 @@ namespace Oakholm {
 		}
 
 		[BurstCompile]
-		public float GetPerlinNoise(Vector2 position) {
-			position += Vector2.one * Offset;
-			position *= Multiplier;
-			return Mathf.PerlinNoise(position.x, position.y) * Weight;
+		public float GetPerlinNoise(float2 position) {
+			return noise.cnoise((position + Offset) * Multiplier) * Weight;
 		}
 
 		public override string ToString() {
-			return Type.ToString();
+			return Type;
 		}
 	}
 }

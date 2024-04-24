@@ -9,39 +9,30 @@ namespace Oakholm {
 
 		private readonly StateManager stateManager;
 
-		private readonly List<UniTask> loadingTaskHandles = new List<UniTask>();
-		private bool stateEqualsLoading = false;
+		private readonly Queue<UniTask> loadingTaskHandles = new();
 
 		public LoadingManager(StateManager stateManager) {
 			this.stateManager = stateManager;
-			stateManager.OnStateChanged += OnStateChanged;
+			stateManager.OnPostStateChanged += OnPostStateChanged;
 		}
 
-		private void OnStateChanged((EState oldState, EState newState) states) {
-			stateEqualsLoading = states.newState == EState.Loading;
+		public override void OnClose() {
+			stateManager.OnPostStateChanged -= OnPostStateChanged;
 		}
 
 		public void AddLoadingTaskHandle(UniTask task) {
-			loadingTaskHandles.Add(task);
+			loadingTaskHandles.Enqueue(task);
 		}
 
-		public override void OnUpdate() {
-			if (!stateEqualsLoading) {
-				return;
-			}
-			CheckTaskStatuses();
-			if (loadingTaskHandles.Count == 0) {
-				stateManager.SetState(EState.Simulation);
+		private void OnPostStateChanged(EState state) {
+			if (state == EState.Loading) {
+				ProcessLoadingTasks().Forget();
 			}
 		}
 
-		private void CheckTaskStatuses() {
-			for (int taskIndex = loadingTaskHandles.Count - 1; taskIndex >= 0; taskIndex--) {
-				UniTask task = loadingTaskHandles[taskIndex];
-				if (task.Status.IsCompleted()) {
-					loadingTaskHandles.Remove(task);
-				}
-			}
+		private async UniTask ProcessLoadingTasks() {
+			await UniTask.WhenAll(loadingTaskHandles);
+			stateManager.SetState(EState.Simulation);
 		}
 	}
 }
