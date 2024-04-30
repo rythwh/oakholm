@@ -97,9 +97,11 @@ namespace Oakholm {
 			if (Mathf.Approximately(zoomAxis, 0)) {
 				return;
 			}
+
 			float currentZoom = camera.orthographicSize;
 			float newZoom = currentZoom + (zoomAxis * CameraZoomSpeedMultiplier);
 			newZoom = Mathf.Clamp(newZoom, ZoomMin, ZoomMax);
+
 			if (!zoomTaskHandle.GetAwaiter().IsCompleted) {
 				zoomTaskHandle.Forget();
 			}

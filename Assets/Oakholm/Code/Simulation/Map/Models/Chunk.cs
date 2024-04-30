@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.Mathematics;
+using UnityEngine;
 
 namespace Oakholm {
 	public class Chunk {
@@ -8,14 +9,14 @@ namespace Oakholm {
 
 		public const int Size = 16;
 
-		public Vector2Int Position { get; private set; }
-		private (Vector2Int min, Vector2Int max) positionBounds;
+		public int2 Position { get; private set; }
+		private (int2 min, int2 max) positionBounds;
 		public RectInt Rect { get; private set; }
 
 		private readonly Tile[][] tiles = new Tile[Size][];
 		private readonly Tile[] tilesLinear = new Tile[Size * Size];
 
-		public Chunk(Vector2Int position, TileView tilePrefab, Grid tileGrid) {
+		public Chunk(int2 position, TileView tilePrefab, Grid tileGrid) {
 			this.tilePrefab = tilePrefab;
 			this.tileGrid = tileGrid;
 
@@ -41,7 +42,7 @@ namespace Oakholm {
 			}
 		}
 
-		public void Reset(Vector2Int position) {
+		public void Reset(int2 position) {
 			Position = position;
 			SetPrerequisiteValues();
 
@@ -58,8 +59,8 @@ namespace Oakholm {
 		}
 
 		private void CalculatePositionBounds() {
-			Vector2Int min = Position * Size;
-			Vector2Int max = Position * Size + (Vector2Int.one * Size);
+			int2 min = Position * Size;
+			int2 max = Position * Size + Size;
 			positionBounds = (min, max);
 		}
 
@@ -81,5 +82,26 @@ namespace Oakholm {
 				tile.Release();
 			}
 		}
+
+		public static bool operator ==(Chunk chunk1, Chunk chunk2) {
+			if (chunk1 == null && chunk2 == null) {
+				return true;
+			}
+			if (chunk1 == null ^ chunk2 == null) {
+				return false;
+			}
+			return chunk1.Equals(chunk2);
+		}
+
+		public static bool operator !=(Chunk chunk1, Chunk chunk2) {
+			return !(chunk1 == chunk2);
+		}
+
+		public override bool Equals(object otherObject) {
+			return otherObject is Chunk otherChunk && Position.Equals(otherChunk.Position);
+		}
+
+		// ReSharper disable once NonReadonlyMemberInGetHashCode
+		public override int GetHashCode() => Position.GetHashCode();
 	}
 }
