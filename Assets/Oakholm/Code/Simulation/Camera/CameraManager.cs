@@ -37,6 +37,7 @@ namespace Oakholm {
 
 		public override void OnGameSetupComplete() {
 			OnCameraPositionChanged?.Invoke(cameraTransform.position);
+			OnCameraZoomChanged?.Invoke(camera.orthographicSize);
 		}
 
 		public override void OnUpdate() {
@@ -76,12 +77,7 @@ namespace Oakholm {
 				zoomTaskHandle.Forget();
 			}
 
-			zoomTaskHandle = DOTween
-				.To(
-					() => camera.orthographicSize,
-					value => camera.orthographicSize = value,
-					newZoom,
-					ZoomTweenDuration)
+			zoomTaskHandle = camera.DOOrthoSize(newZoom, ZoomTweenDuration)
 				.SetEase(Ease.OutCubic)
 				.Play()
 				.OnComplete(() => OnCameraZoomChanged?.Invoke(newZoom))

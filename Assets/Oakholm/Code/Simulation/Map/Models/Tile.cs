@@ -40,7 +40,7 @@ namespace Oakholm {
 
 		private void SetHeight() {
 			Height = MapGenerator.GetTileHeight(this);
-			spriteRenderer.color = Height.obj.DebugColour * Height.value;
+			view.SetColour(Height);
 			#if UNITY_EDITOR
 			view.name += $"_H:{Height}";
 			#endif
