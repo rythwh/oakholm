@@ -69,7 +69,7 @@ namespace Oakholm {
 		}
 
 		private void OnCameraChanged() {
-			RectInt cameraWorldRect = cameraManager.GetCameraWorldRect();
+			RectInt cameraWorldRect = cameraManager.CalculateCameraWorldRect();
 			RectInt validAreaRect = GetValidAreaRectChunkScale(cameraWorldRect);
 			Map?.SetValidAreaRect(validAreaRect);
 			Map?.UnloadHiddenChunks();
