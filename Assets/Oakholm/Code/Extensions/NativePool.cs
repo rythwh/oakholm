@@ -7,7 +7,7 @@ namespace Oakholm.Extensions {
 
 	[StructLayout(LayoutKind.Sequential)]
 	[NativeContainer]
-	[BurstCompatible(GenericTypeArguments = new[] { typeof(int) })]
+	[GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]
 	public struct NativePool<T> where T : unmanaged, IEquatable<T> {
 
 		private NativeList<T> pool;
